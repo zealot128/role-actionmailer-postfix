@@ -1,0 +1,16 @@
+#!/bin/bash
+
+/usr/bin/curl -u actionmailbox:{{item.password}} \
+  -H 'Content-Type: message/rfc822' \
+  -f --silent \
+  --data-binary @- \
+  {{item.url}}
+
+if [[ $? -ne 0 ]]; then
+    # Print a 4.4.1 temporary failure message for Postfix logging
+    echo "4.4.1 Temporary failure: Unable to reach the Action Mailbox server"
+    exit 1  # Signal a temporary failure to Postfix
+fi
+
+echo "2.0.0 Successfully delivered"
+exit 0

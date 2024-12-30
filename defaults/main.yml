@@ -1,0 +1,4 @@
+---
+action_mailboxes: []
+action_mailbox_folder: /etc/postfix/actionmailbox
+action_mailbox_alias_file: "{{ action_mailbox_folder }}/virtual_aliases"

@@ -1,0 +1,5 @@
+{% for mailbox in action_mailboxes %}
+{% for email in mailbox.email_addresses %}
+{{email}} {{mailbox.name}}@localhost
+{% endfor %}
+{% endfor %}

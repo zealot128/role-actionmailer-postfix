@@ -1,0 +1,43 @@
+---
+- name: "Create action_mailbox_folder"
+  ansible.builtin.file:
+    path: '{{ action_mailbox_folder }}'
+    state: directory
+
+- name: "Read virtual_alias_maps before"
+  shell: 'postconf -n | grep virtual_alias_maps'
+  register: virtual_alias_maps_before
+
+- name: 'Create alias_file'
+  ansible.builtin.template:
+    src: actionmailbox_aliases.j2
+    dest: "{{ action_mailbox_alias_file }}"
+    mode: '0644'
+  notify: 'run postmap'
+
+- name: 'Add alias_file to virtual_alias_maps, if missing'
+  ansible.builtin.lineinfile:
+    path: /etc/postfix/main.cf
+    line: '{{ virtual_alias_maps_before.stdout }},regexp:{{ action_mailbox_alias_file }}'
+    regexp: '^virtual_alias_maps'
+    state: present
+  when: 'action_mailbox_alias_file not in virtual_alias_maps_before.stdout'
+
+- name: "Add Aliases to /etc/aliases"
+  ansible.builtin.blockinfile:
+    path: /etc/aliases
+    block: |
+      # Added by Ansible
+      {% for mailbox in action_mailboxes %}
+      {{ mailbox.name }}: |{{ action_mailbox_folder }}/{{ mailbox.name }}
+      {% endfor %}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+  notify: 'run postalias'
+
+- name: "Create delivery script"
+  ansible.builtin.template:
+    src: deliver_to.j2
+    dest: "{{ action_mailbox_folder }}/{{ item.name }}"
+    mode: '0755'
+  with_items: '{{ action_mailboxes }}'
+  notify: 'run postmap'

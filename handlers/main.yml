@@ -1,0 +1,11 @@
+---
+- name: 'run postmap'
+  command: 'postmap {{ action_mailbox_alias_file }}'
+  notify: 'Reload postfix'
+- name: 'run postalias'
+  command: 'postalias /etc/aliases'
+  notify: 'Reload postfix'
+- name: 'Reload postfix'
+  ansible.builtin.service:
+    name: postfix
+    state: reloaded
